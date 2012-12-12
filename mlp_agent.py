@@ -16,9 +16,9 @@ from deeplearning.mlp import MLP
 
 ##
 n_hidden = 5
-discount_factor = 0.999
+discount_factor = 0.99
 learning_rate = 0.2
-p_exploration = 2**10
+p_exploration = 0
 p_exploration_decay = 0.5
 ##
 
@@ -106,17 +106,21 @@ class mlp_agent(Agent):
     def compile_rprop_update(self):
         eta_n = 0.5
         eta_p = 1.2
+        v_min = 1e-6
+        v_max = 50
+
         self.rprop_values = [shared(learning_rate*numpy.ones(p.get_value(borrow=True).shape)) for p in self.mlp.params]
         self.rprop_signs = [shared(numpy.zeros(p.get_value(borrow=True).shape)) for p in self.mlp.params]
         target = T.vector('target')
         cost = T.sum(T.sqr(self.q - target)) + 0.001*self.mlp.L2_sqr
+
         updates = []
         for p,v,s in zip(self.mlp.params,self.rprop_values,self.rprop_signs):
             g = T.grad(cost, p)
             s_new = T.sgn(g)
             sign_changed = T.neq(s, s_new)
-            updates.append((p, p - v*s_new))
-            updates.append((v, T.switch(sign_changed, eta_n*v, eta_p*v)))
+            updates.append((p, T.switch(sign_changed, p, p - v*s_new)))
+            updates.append((v, T.clip(T.switch(sign_changed, eta_n*v, eta_p*v),v_min,v_max)))
             updates.append((s, s_new))
         return function([self.x_state,self.x_action,target], T.sum(T.sqr(self.rprop_values[0])), updates=updates)
 
@@ -163,16 +167,13 @@ class mlp_agent(Agent):
         targets = numpy.array([e[2] for e in self.experiences])
         print targets
         cost = self.update(states,actions,targets)
+        #cost = numpy.inf
+        #while cost > 0.1:
+            #cost = self.update(states,actions,targets)
         print 'Cost:',cost
-        if cost < 0.1:
-            print 'Exploiting!'
-            self.p_exploration = 0
-        else:
-            print 'Exploring!'
-            self.p_exploration = 1
         self.experiences = []
-        #self.p_exploration *= p_exploration_decay
-        #print 'p_exploration',self.p_exploration
+        self.p_exploration *= p_exploration_decay
+        print 'p_exploration',self.p_exploration
 
     def agent_cleanup(self):
         pass
