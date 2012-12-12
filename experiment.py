@@ -55,7 +55,7 @@ print "RL_init called, the environment sent task spec: " + taskSpec
 
 print "\n\n----------Running  episodes----------"
 while True:
-    runEpisode(0)
+    runEpisode(10000)
 # Remember that stepLimit of 0 means there is no limit at all!*/
 #runEpisode(0)
 RLGlue.RL_cleanup()

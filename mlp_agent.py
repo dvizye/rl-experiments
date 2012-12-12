@@ -16,9 +16,10 @@ from deeplearning.mlp import MLP
 
 ##
 n_hidden = 5
-discount_factor = 1.0
+discount_factor = 0.999
 learning_rate = 0.2
-p_exploration = 1.0
+p_exploration = 2**10
+p_exploration_decay = 0.5
 ##
 
 # use double-precision for convenience
@@ -161,10 +162,17 @@ class mlp_agent(Agent):
         actions = numpy.array([e[1] for e in self.experiences],dtype='int32')
         targets = numpy.array([e[2] for e in self.experiences])
         print targets
-        print self.update(states,actions,targets)
+        cost = self.update(states,actions,targets)
+        print 'Cost:',cost
+        if cost < 0.1:
+            print 'Exploiting!'
+            self.p_exploration = 0
+        else:
+            print 'Exploring!'
+            self.p_exploration = 1
         self.experiences = []
-        self.p_exploration *= 0.99
-        print 'p_exploration',self.p_exploration
+        #self.p_exploration *= p_exploration_decay
+        #print 'p_exploration',self.p_exploration
 
     def agent_cleanup(self):
         pass
