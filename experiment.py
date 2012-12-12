@@ -23,14 +23,15 @@ import rlglue.RLGlue as RLGlue
 whichEpisode=0
 
 def runEpisode(stepLimit):
-	global whichEpisode
-	terminal=RLGlue.RL_episode(stepLimit)
-	totalSteps=RLGlue.RL_num_steps()
-	totalReward=RLGlue.RL_return()
-	
-	print "Episode "+str(whichEpisode)+"\t "+str(totalSteps)+ " steps \t" + str(totalReward) + " total reward\t " + str(terminal) + " natural end"
-	
-	whichEpisode=whichEpisode+1
+    global whichEpisode
+    terminal=RLGlue.RL_episode(stepLimit)
+    totalSteps=RLGlue.RL_num_steps()
+    totalReward=RLGlue.RL_return()
+    RLGlue.RL_agent_message('episode over')
+    
+    print "Episode "+str(whichEpisode)+"\t "+str(totalSteps)+ " steps \t" + str(totalReward) + " total reward\t " + str(terminal) + " natural end"
+    
+    whichEpisode=whichEpisode+1
 
 #Main Program starts here
 
@@ -52,14 +53,11 @@ print "RL_init called, the environment sent task spec: " + taskSpec
 #responseMessage = RLGlue.RL_env_message("If at first you don't succeed; call it version 1.0")
 #print "Environment responded to \"If at first you don't succeed; call it version 1.0  \" with: " + responseMessage
 
-print "\n\n----------Running a few episodes----------"
-runEpisode(100)
-runEpisode(100)
-runEpisode(100)
-runEpisode(100)
-runEpisode(100)
+print "\n\n----------Running  episodes----------"
+while True:
+    runEpisode(0)
 # Remember that stepLimit of 0 means there is no limit at all!*/
-runEpisode(0)
+#runEpisode(0)
 RLGlue.RL_cleanup()
 
 print "\n\n----------Stepping through an episode----------"
