@@ -16,8 +16,8 @@ from deeplearning.mlp import MLP
 
 ##
 n_hidden = 5
-discount_factor = 0.9
-learning_rate = 0.1
+discount_factor = 1.0
+learning_rate = 0.2
 p_exploration = 1.0
 ##
 
@@ -39,6 +39,7 @@ class mlp_agent(Agent):
 
         self.state_bounds = None
         self.num_actions = 3
+        self.reward_bounds = None
 
         self.mlp = None
 
@@ -67,38 +68,56 @@ class mlp_agent(Agent):
             self.action_bounds += [(specAct[i][0],specAct[i][1])]
         assert self.action_bounds[0][0]==0, 'action indices should start at 0'
         self.num_actions = self.action_bounds[0][1] - self.action_bounds[0][0] + 1
+        self.reward_bounds = TaskSpec.getRewardRange()[0]
 
         print('compiling model...')
-        self.x_state = T.vector('x_state')
-        self.x_action = T.iscalar('x_action')
-        self.x_action_onehot = T.eq(numpy.arange(self.num_actions), self.x_action)
-        self.x = T.concatenate([self.x_state, self.x_action_onehot])
+        self.x_state = T.matrix('x_state')
+        self.x_action = T.ivector('x_action')
+        onehotifier = shared(numpy.arange(self.num_actions,dtype='int32').reshape((self.num_actions,1)), broadcastable=(False,True))
+        self.x_action_onehot = T.eq(onehotifier, self.x_action).dimshuffle((1,0))
+        self.x = T.concatenate([self.x_state, self.x_action_onehot],axis=1)
 
-        self.mlp = MLP(rng=self.numpy_rng, input=self.x, n_in=self.state_size+self.num_actions, n_hidden=n_hidden, n_out=1)
-        self.evaluate = function([self.x_state,self.x_action], self.mlp.output[0])
-        self.q_update = self.compile_q_update()
+        #def output_activation(x): return (1/(1-discount_factor))*(T.tanh(x)*(self.reward_bounds[1]-self.reward_bounds[0])+self.reward_bounds[0])
+        #self.mlp = MLP(rng=self.numpy_rng, input=self.x, n_in=self.state_size+self.num_actions, n_hidden=n_hidden, n_out=1, activation=output_activation)
+        self.mlp = MLP(rng=self.numpy_rng, input=self.x, n_in=self.state_size+self.num_actions, n_hidden=n_hidden, n_out=1, activation=None)
+        self.q = self.mlp.output[:,0]
+        self.evaluate = function([self.x_state,self.x_action], self.q)
 
-    def compile_q_update(self):
-        x_next_state = T.vector('x_next_state')
+        max_state = T.vector('state')
+        max_state_repeated = T.concatenate(self.num_actions*[max_state.dimshuffle('x',0)],axis=0)
+        self.max_action = function([max_state],
+                T.max_and_argmax(self.q),
+                givens = {self.x_action: numpy.arange(self.num_actions,dtype='int32'),
+                          self.x_state: max_state_repeated})
 
-        reward = T.scalar('r')
-        maxq = T.scalar('maxq')
-        cost = T.sum(T.sqr(self.mlp.output[0] - (reward + discount_factor*maxq)))
+        self.update = self.compile_rprop_update()
+
+        self.experiences = []
+
+    def compile_bprop_update(self):
+        target = T.vector('target')
+        cost = T.sum(T.sqr(self.q - target)) # + 0.001*self.mlp.L2_sqr
         updates = []
         for p in self.mlp.params:
             updates.append((p, p - learning_rate*T.grad(cost, p)))
-        return function([self.x_state,self.x_action,reward,maxq], cost, updates=updates)
+        return function([self.x_state,self.x_action,target], cost, updates=updates)
 
-    def max_action(self, state):
-        """return best action according to current estimate of Q"""
-        best = 0
-        bestq = self.evaluate(state, best)
-        for a in range(1,self.num_actions):
-            q = self.evaluate(state, a)
-            if q > bestq:
-                best = a
-                bestq = q
-        return best, bestq
+    def compile_rprop_update(self):
+        eta_n = 0.5
+        eta_p = 1.2
+        self.rprop_values = [shared(learning_rate*numpy.ones(p.get_value(borrow=True).shape)) for p in self.mlp.params]
+        self.rprop_signs = [shared(numpy.zeros(p.get_value(borrow=True).shape)) for p in self.mlp.params]
+        target = T.vector('target')
+        cost = T.sum(T.sqr(self.q - target)) + 0.001*self.mlp.L2_sqr
+        updates = []
+        for p,v,s in zip(self.mlp.params,self.rprop_values,self.rprop_signs):
+            g = T.grad(cost, p)
+            s_new = T.sgn(g)
+            sign_changed = T.neq(s, s_new)
+            updates.append((p, p - v*s_new))
+            updates.append((v, T.switch(sign_changed, eta_n*v, eta_p*v)))
+            updates.append((s, s_new))
+        return function([self.x_state,self.x_action,target], T.sum(T.sqr(self.rprop_values[0])), updates=updates)
 
     def random_action(self):
         return random.choice(range(0,self.num_actions))
@@ -110,7 +129,7 @@ class mlp_agent(Agent):
         if random.random() < self.p_exploration:
             action = self.random_action()
         else:
-            action, _ = self.max_action(state)
+            _, action = self.max_action(state)
 
         self.prev_state = copy.deepcopy(state)
         self.prev_action = copy.deepcopy(action)
@@ -120,14 +139,15 @@ class mlp_agent(Agent):
     # R * Observation -> Action
     def agent_step(self, reward, observation):
         state = observation.doubleArray
-        max_action, max_q = self.max_action(state)
-
-        self.q_update(self.prev_state, self.prev_action, reward, max_q)
+        max_q, max_action = self.max_action(state)
 
         if random.random() < self.p_exploration:
             action = self.random_action()
         else:
             action = max_action
+
+        target = reward + discount_factor * max_q
+        self.experiences.append((self.prev_state,self.prev_action,target))
 
         self.prev_state = copy.deepcopy(state)
         self.prev_action = copy.deepcopy(action)
@@ -136,18 +156,21 @@ class mlp_agent(Agent):
 
     # R -> ()
     def agent_end(self, reward):
-        self.q_update(self.prev_state, self.prev_action, reward, 0)
-        self.p_exploration *= 0.999
-        print self.p_exploration
-        pass
+        self.experiences.append((self.prev_state,self.prev_action,reward))
+        states = numpy.vstack([e[0] for e in self.experiences])
+        actions = numpy.array([e[1] for e in self.experiences],dtype='int32')
+        targets = numpy.array([e[2] for e in self.experiences])
+        print targets
+        print self.update(states,actions,targets)
+        self.experiences = []
+        self.p_exploration *= 0.99
+        print 'p_exploration',self.p_exploration
 
     def agent_cleanup(self):
         pass
 
     def agent_message(self, message):
-        if message == 'episode over':
-            # TODO: train network by NFQ
-            pass
+        pass
 
 if __name__=="__main__":
     AgentLoader.loadAgent(mlp_agent())

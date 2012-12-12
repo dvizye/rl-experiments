@@ -99,10 +99,11 @@ class Layer(object):
         self.params = [self.W, self.b]
 
 class MLP(object):
-    def __init__(self, rng, input, n_in, n_hidden, n_out):
+    def __init__(self, rng, input, n_in, n_hidden, n_out, activation=None):
         self.layers = []
         self.layers.append(Layer(rng=rng, input=input, n_in=n_in, n_out=n_hidden, activation=T.tanh))
-        self.layers.append(Layer(rng=rng, input=self.layers[-1].output, n_in=n_hidden, n_out=n_out, activation=None))
+        self.layers.append(Layer(rng=rng, input=self.layers[-1].output, n_in=n_hidden, n_out=n_hidden, activation=T.tanh))
+        self.layers.append(Layer(rng=rng, input=self.layers[-1].output, n_in=n_hidden, n_out=n_out, activation=activation))
         self.params = sum([l.params for l in self.layers],[])
         self.output = self.layers[-1].output
 
