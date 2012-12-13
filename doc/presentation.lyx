@@ -200,7 +200,7 @@ References
 \begin_layout Standard
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
-bibfiles "/home/gmaslov/Mendeley/library"
+bibfiles "/home/maslov/Mendeley/library"
 options "unsrt"
 
 \end_inset
