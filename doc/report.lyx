@@ -70,7 +70,8 @@ Greg Maslov <maslov@cs.unc.edu>
 
 \begin_layout Abstract
 I discuss the background and motivation for the Neural Fitted Q Iteration
- algorithm, and evaluate my implementation on a standard benchmark.
+ algorithm, evaluate my implementation on a standard benchmark, and discuss
+ future work.
 \end_layout
 
 \begin_layout Abstract
@@ -92,10 +93,11 @@ I'm always on the lookout for ways to progress towards stronger AI.
  --- if only it worked! Unfortunately designing and training RL systems
  tends to be at least as difficult as solving the problem more directly.
  Part of the difficulty lies in finding a good representation for the Q
- function, value function, or policy function (depending on your flavour
+ function, policy, and/or state transition function (depending on your flavour
  of RL).
  Multilayer Perceptrons have been used as function approximators to this
  end, but that model comes with its own set of intractable difficulties.
+ Neural Fitted Q Iteration addresses some of these.
 \end_layout
 
 \begin_layout Standard
@@ -111,6 +113,21 @@ key "Bengio2009"
  Their similarity to MLP models naturally suggests that some of this success
  could also be applied to reinforcement learning.
  
+\end_layout
+
+\begin_layout Standard
+The goal of this project was to investigate the application of deep belief
+ networks (DBNs) in place of MLPs as the Q function approximator, building
+ on Abtahi's work
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Abtahi2011"
+
+\end_inset
+
+.
+ Unfortunately I was only able to get as far as implementing NFQ on a plain
+ MLP, without any deep structure, pretraining, or other bells and whistles.
 \end_layout
 
 \begin_layout Section
@@ -189,8 +206,8 @@ Applying the update rule whenever a new reward is received may cause the
 \end_inset
 
 , depending on the policy being followed.
- Finding a policy that balances exploration with exploitation in a complicated
- environment is an open problem.
+ Finding a policy that effectively balances exploration with exploitation
+ in a complex environment is an open problem.
 \end_layout
 
 \begin_layout Standard
@@ -201,9 +218,8 @@ Besides that difficulty, there is also the question of how to store
 -values in a compact way that still allows for efficient updates.
  With a small discrete state and action space, there is no problem simply
  keeping a table of values.
- Unfortunately for us, most interesting robotics tasks take place in the
- high-dimensional, continuous state and action spaces that characterize
- the real world.
+ Alas, most interesting robotics tasks take place in the high-dimensional,
+ continuous state and action spaces that characterize the real world.
  
 \end_layout
 
@@ -431,14 +447,14 @@ Rprop
 \end_layout
 
 \begin_layout Standard
-Second, this method directly addresses the nonlocality problem described
- earlier.
+Second, this method directly addresses the problem of nonlocal updates and
+ generalization described above.
  The effect of including earlier training pairs in the batch is to 
 \emph on
 constrain
 \emph default
- the direction that generalization can go in to only ones which do not disrupt
- the other 
+ the direction that generalization can go in, to only directions which do
+ not disrupt the other 
 \begin_inset Formula $Q$
 \end_inset
 
@@ -446,7 +462,7 @@ constrain
 \end_layout
 
 \begin_layout Section
-Achievements
+Results
 \end_layout
 
 \begin_layout Standard
@@ -456,6 +472,7 @@ I used Python2 and the Theano, RL-Glue, and RL-Library libraries to implement
 Rprop
 \shape default
  on the CartPole balancing task benchmark.
+ I used a one-hidden-layer, tanh-activation MLP with 5 hidden nodes.
  My agent converges to a successful policy after about 200-300 epochs.
  This result roughly matches that obtained by 
 \begin_inset CommandInset citation
@@ -465,7 +482,49 @@ key "Riedmiller2005"
 \end_inset
 
 .
- Unfortunately, I did not have time this semester to investigate a DBN
+ 
+\end_layout
+
+\begin_layout Itemize
+Demo/results video:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.youtube.com/watch?v=upoDIFzAets"
+target "http://www.youtube.com/watch?v=upoDIFzAets"
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Source code:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset CommandInset href
+LatexCommand href
+name "https://github.com/gmaslov/rl-experiments"
+target "https://github.com/gmaslov/rl-experiments"
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Section
+Future Work
+\end_layout
+
+\begin_layout Standard
+Unfortunately, I did not have time this semester to investigate a DBN
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Abtahi2011"
@@ -493,34 +552,50 @@ key "Lange2010"
 -representation, nor any method of active learning.
 \end_layout
 
-\begin_layout Itemize
-Demo/results video: 
-\begin_inset CommandInset href
-LatexCommand href
-name "http://www.youtube.com/watch?v=upoDIFzAets"
-target "http://www.youtube.com/watch?v=upoDIFzAets"
+\begin_layout Standard
+The major difficulty that NFQ has, whether operating on an MLP or a DBN
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+as in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Abtahi2011"
 
 \end_inset
 
-
+; note that with no unsupervised pretraining a DBN is equivalent to an MLP.
 \end_layout
 
-\begin_layout Itemize
-Source code: 
-\begin_inset CommandInset href
-LatexCommand href
-name "https://github.com/gmaslov/rl-experiments"
-target "https://github.com/gmaslov/rl-experiments"
+\end_inset
+
+, is the heavily unbalanced distribution of states that arises from following
+ a greedy policy.
+ Furthermore, a random policy is completely ineffective for exploration
+ in more interesting environments.
+ That's why I believe future research in this area should focus on directed
+ exploration and active learning.
+\end_layout
+
+\begin_layout Standard
+I imagine that there must be some way to use the fact that a DBN is a generative
+ model to create a model-based active learning scheme.
+ Possibly inspired by RMAX or its variations
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Szita2010"
 
 \end_inset
 
-
+.
+ I haven't been able to come up with anything, though.
 \end_layout
 
 \begin_layout Standard
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
-bibfiles "/home/gmaslov/Mendeley/library"
+bibfiles "/home/maslov/Mendeley/library"
 options "ieeetr"
 
 \end_inset
