@@ -66,84 +66,41 @@
 \begin_body
 
 \begin_layout Title
-Deep Architectures for Reinforcement Learning
+Function Approximation in Reinforcement Learning
+\end_layout
+
+\begin_layout Author
+Greg Maslov 
+\family typewriter
+<maslov@cs.unc.edu>
 \end_layout
 
 \begin_layout BeginFrame
-Outline
-\end_layout
-
-\begin_layout Standard
-In my last presentation I showed how reinforcement learning could be used
- as part of a complicated system to train a differential equation -based
- model of motion to perform a task.
-\end_layout
-
-\begin_layout Standard
-I also briefly mentioned how neural networks can be used to represent the
- function being learned.
- And that's what I'll be examining today.
+Demo!
 \end_layout
 
 \begin_layout Itemize
-Q-Learning
-\end_layout
+Demo: 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.youtube.com/watch?v=upoDIFzAets"
+target "http://www.youtube.com/watch?v=upoDIFzAets"
 
-\begin_deeper
-\begin_layout Itemize
-the Q update rule requires some kind of updatable representation of a function
-\end_layout
+\end_inset
 
-\end_deeper
-\begin_layout Itemize
-Multilayer perceptron
-\end_layout
 
-\begin_layout Itemize
-Problem with the MLP for Q-learning
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-reference: NFQ paper
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Neural Fitted Q Iteration
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-how it solves this problem
 \end_layout
 
 \begin_layout Itemize
-remaining problems (???)
-\end_layout
+Code: 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://github.com/gmaslov/rl-experiments"
+target "https://github.com/gmaslov/rl-experiments"
 
-\end_deeper
-\begin_layout Itemize
-Deep belief network
-\end_layout
+\end_inset
 
-\begin_deeper
-\begin_layout Itemize
-a semi-supervised method
-\end_layout
 
-\begin_layout Itemize
-greedy layerwise pretraining puts the network in a relevant region of the
- parameter space
-\end_layout
-
-\begin_layout Itemize
-finetuning proceeds just like an MLP
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Challenges using a DBN for Q-Learning
 \end_layout
 
 \begin_layout BeginFrame
@@ -161,61 +118,79 @@ Q(s,a)\leftarrow(1-\alpha)Q(s,a)+\alpha\left[R(s')+\gamma\max_{a'}Q(s',a')\right
 
 \end_layout
 
-\begin_layout Standard
-TODO: explain
+\begin_layout Itemize
+Function representation
 \end_layout
 
+\begin_deeper
+\begin_layout Itemize
+Table
+\end_layout
+
+\begin_layout Itemize
+Task-specific model
+\end_layout
+
+\begin_layout Itemize
+Neural network
+\end_layout
+
+\end_deeper
 \begin_layout BeginFrame
 Multilayer Perceptron
 \end_layout
 
 \begin_layout Standard
-TODO: diagram goes here
+\align center
+\begin_inset Graphics
+	filename figures/ann.jpg
+	width 50col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Combinatorial explosion 
+\begin_inset Formula $\longleftrightarrow$
+\end_inset
+
+ Local minima
+\end_layout
+
+\begin_layout Itemize
+Updates are nonlocal
 \end_layout
 
 \begin_layout BeginFrame
 Neural Fitted Q Iteration
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Riedmiller2005"
+
+\end_inset
+
+
 \end_layout
 
-\begin_layout Standard
-- weight updates have global effects
+\begin_layout Itemize
+Store training examples
 \end_layout
 
-\begin_layout Standard
-- so store experiences and replay
+\begin_layout Itemize
+Batch update allows Rprop
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Riedmiller1994"
+
+\end_inset
+
+
 \end_layout
 
-\begin_layout Standard
-- but MLPs just empirically don't work very well
-\end_layout
-
-\begin_layout BeginFrame
-Deep Belief Network
-\end_layout
-
-\begin_layout Standard
-TODO: rip off Hinton's presentation
-\end_layout
-
-\begin_layout Standard
-- semisupervised
-\end_layout
-
-\begin_layout Standard
-- greedy layerwise pretraining biases the network towards a relevant region
- of the parameter space
-\end_layout
-
-\begin_layout BeginFrame
-DBN Q Learning
-\end_layout
-
-\begin_layout Standard
-- Pretraining
-\end_layout
-
-\begin_layout Standard
-- generative model
+\begin_layout Itemize
+Batch update constrains generalization
 \end_layout
 
 \begin_layout BeginFrame

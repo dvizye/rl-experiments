@@ -61,7 +61,7 @@
 \begin_body
 
 \begin_layout Title
-Deep Architectures for Reinforcement Learning
+Function Approximation in Reinforcement Learning
 \end_layout
 
 \begin_layout Author
@@ -69,12 +69,13 @@ Greg Maslov <maslov@cs.unc.edu>
 \end_layout
 
 \begin_layout Abstract
-TODO: write an abstract.
+I discuss the background and motivation for the Neural Fitted Q Iteration
+ algorithm, and evaluate my implementation on a standard benchmark.
 \end_layout
 
 \begin_layout Abstract
 \begin_inset FormulaMacro
-\renewcommand{\argmax}{\operatorname*{argmax}}
+\newcommand{\argmax}{\operatorname*{argmax}}
 {\mathrm{argmax}}
 \end_inset
 
@@ -110,28 +111,6 @@ key "Bengio2009"
  Their similarity to MLP models naturally suggests that some of this success
  could also be applied to reinforcement learning.
  
-\end_layout
-
-\begin_layout Standard
-TODO: cite: 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Abtahi2011"
-
-\end_inset
-
- (DBN)
-\end_layout
-
-\begin_layout Standard
-TODO: cite elsewhere: 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Lange2010"
-
-\end_inset
-
- (autoencoders)
 \end_layout
 
 \begin_layout Section
@@ -210,6 +189,8 @@ Applying the update rule whenever a new reward is received may cause the
 \end_inset
 
 , depending on the policy being followed.
+ Finding a policy that balances exploration with exploitation in a complicated
+ environment is an open problem.
 \end_layout
 
 \begin_layout Standard
@@ -339,7 +320,11 @@ ns of the input.
  But remember that the network is being trained using gradient descent;
  the deeper back into the network it goes, the smaller the gradients become
  (due to fan-out), and the slower the training process becomes.
- There are methods of mitigating this effect (such as Rprop
+ There are methods of mitigating this effect (such as 
+\shape smallcaps
+Rprop
+\shape default
+
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Riedmiller1994"
@@ -430,15 +415,106 @@ forget
 \end_layout
 
 \begin_layout Standard
-TODO: write the rest of this
+The idea is simply to store experiences 
+\begin_inset Formula $(s,a,s',R)$
+\end_inset
+
+ in a list during each RL episode while following a greedy policy, then
+ iteratively training on all of them in a batch at the end of an episode.
+ This has two beneficial effects: first, the change from single updates
+ to batch updates allows the use of a more sophisticated variation on gradient
+ descent; namely, 
+\shape smallcaps
+Rprop
+\shape default
+, which is faster and far less sensitive to learning rate and batch size.
 \end_layout
 
-\begin_layout Subsection
-Deep Belief Network
+\begin_layout Standard
+Second, this method directly addresses the nonlocality problem described
+ earlier.
+ The effect of including earlier training pairs in the batch is to 
+\emph on
+constrain
+\emph default
+ the direction that generalization can go in to only ones which do not disrupt
+ the other 
+\begin_inset Formula $Q$
+\end_inset
+
+ values in the training set.
 \end_layout
 
 \begin_layout Section
-????
+Achievements
+\end_layout
+
+\begin_layout Standard
+I used Python2 and the Theano, RL-Glue, and RL-Library libraries to implement
+ NFQ+
+\shape smallcaps
+Rprop
+\shape default
+ on the CartPole balancing task benchmark.
+ My agent converges to a successful policy after about 200-300 epochs.
+ This result roughly matches that obtained by 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Riedmiller2005"
+
+\end_inset
+
+.
+ Unfortunately, I did not have time this semester to investigate a DBN
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Abtahi2011"
+
+\end_inset
+
+, M-DBN
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Pape2011"
+
+\end_inset
+
+, or autoencoder
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Lange2010"
+
+\end_inset
+
+ 
+\begin_inset Formula $Q$
+\end_inset
+
+-representation, nor any method of active learning.
+\end_layout
+
+\begin_layout Itemize
+Demo/results video: 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.youtube.com/watch?v=upoDIFzAets"
+target "http://www.youtube.com/watch?v=upoDIFzAets"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Source code: 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://github.com/gmaslov/rl-experiments"
+target "https://github.com/gmaslov/rl-experiments"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
