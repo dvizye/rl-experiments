@@ -1,0 +1,241 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass beamer
+\begin_preamble
+\usetheme{default}
+\setbeamertemplate{navigation symbols}{}
+\end_preamble
+\options mathserif
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Deep Architectures for Reinforcement Learning
+\end_layout
+
+\begin_layout BeginFrame
+Outline
+\end_layout
+
+\begin_layout Standard
+In my last presentation I showed how reinforcement learning could be used
+ as part of a complicated system to train a differential equation -based
+ model of motion to perform a task.
+\end_layout
+
+\begin_layout Standard
+I also briefly mentioned how neural networks can be used to represent the
+ function being learned.
+ And that's what I'll be examining today.
+\end_layout
+
+\begin_layout Itemize
+Q-Learning
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+the Q update rule requires some kind of updatable representation of a function
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Multilayer perceptron
+\end_layout
+
+\begin_layout Itemize
+Problem with the MLP for Q-learning
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+reference: NFQ paper
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Neural Fitted Q Iteration
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+how it solves this problem
+\end_layout
+
+\begin_layout Itemize
+remaining problems (???)
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Deep belief network
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+a semi-supervised method
+\end_layout
+
+\begin_layout Itemize
+greedy layerwise pretraining puts the network in a relevant region of the
+ parameter space
+\end_layout
+
+\begin_layout Itemize
+finetuning proceeds just like an MLP
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Challenges using a DBN for Q-Learning
+\end_layout
+
+\begin_layout BeginFrame
+Q Learning
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+Q(s,a)\leftarrow(1-\alpha)Q(s,a)+\alpha\left[R(s')+\gamma\max_{a'}Q(s',a')\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+TODO: explain
+\end_layout
+
+\begin_layout BeginFrame
+Multilayer Perceptron
+\end_layout
+
+\begin_layout Standard
+TODO: diagram goes here
+\end_layout
+
+\begin_layout BeginFrame
+Neural Fitted Q Iteration
+\end_layout
+
+\begin_layout Standard
+- weight updates have global effects
+\end_layout
+
+\begin_layout Standard
+- so store experiences and replay
+\end_layout
+
+\begin_layout Standard
+- but MLPs just empirically don't work very well
+\end_layout
+
+\begin_layout BeginFrame
+Deep Belief Network
+\end_layout
+
+\begin_layout Standard
+TODO: rip off Hinton's presentation
+\end_layout
+
+\begin_layout Standard
+- semisupervised
+\end_layout
+
+\begin_layout Standard
+- greedy layerwise pretraining biases the network towards a relevant region
+ of the parameter space
+\end_layout
+
+\begin_layout BeginFrame
+DBN Q Learning
+\end_layout
+
+\begin_layout Standard
+- Pretraining
+\end_layout
+
+\begin_layout Standard
+- generative model
+\end_layout
+
+\begin_layout BeginFrame
+References
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "/home/gmaslov/Mendeley/library"
+options "unsrt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout EndFrame
+
+\end_layout
+
+\end_body
+\end_document

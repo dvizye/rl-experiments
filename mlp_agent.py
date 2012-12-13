@@ -31,6 +31,12 @@ def make_rlglue_action(action):
     return a
 
 class mlp_agent(Agent):
+    """
+    A Q-learning agent using a feedforward MLP to represent the Q function.
+    The network is trained using Neural Fitted Q Iteration and Rprop.
+
+    Greg Maslov <maslov@cs.unc.edu>
+    """
 
     def __init__(self):
         self.numpy_rng = numpy.random.RandomState(42)
@@ -86,6 +92,7 @@ class mlp_agent(Agent):
 
         max_state = T.vector('state')
         max_state_repeated = T.concatenate(self.num_actions*[max_state.dimshuffle('x',0)],axis=0)
+        # Return the Q value and identity of the maximum-Q action from a given state.
         self.max_action = function([max_state],
                 T.max_and_argmax(self.q),
                 givens = {self.x_action: numpy.arange(self.num_actions,dtype='int32'),
@@ -95,15 +102,8 @@ class mlp_agent(Agent):
 
         self.experiences = []
 
-    def compile_bprop_update(self):
-        target = T.vector('target')
-        cost = T.sum(T.sqr(self.q - target)) # + 0.001*self.mlp.L2_sqr
-        updates = []
-        for p in self.mlp.params:
-            updates.append((p, p - learning_rate*T.grad(cost, p)))
-        return function([self.x_state,self.x_action,target], cost, updates=updates)
-
     def compile_rprop_update(self):
+        """Returns a function implementing one iteration of Rprop training."""
         eta_n = 0.5
         eta_p = 1.2
         v_min = 1e-6
@@ -112,6 +112,7 @@ class mlp_agent(Agent):
         self.rprop_values = [shared(learning_rate*numpy.ones(p.get_value(borrow=True).shape)) for p in self.mlp.params]
         self.rprop_signs = [shared(numpy.zeros(p.get_value(borrow=True).shape)) for p in self.mlp.params]
         target = T.vector('target')
+        # L2-norm regularization term keeps the weights under control
         cost = T.sum(T.sqr(self.q - target)) + 0.001*self.mlp.L2_sqr
 
         updates = []
