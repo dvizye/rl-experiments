@@ -30,6 +30,13 @@ def make_rlglue_action(action):
     a.intArray = [int(action)]
     return a
 
+class Experience(object):
+    def __init__(self, prev_state, prev_action, state, reward):
+        self.prev_state = prev_state
+        self.prev_action = prev_action
+        self.state = state
+        self.reward = reward
+
 class mlp_agent(Agent):
     """
     A Q-learning agent using a feedforward MLP to represent the Q function.
@@ -86,6 +93,7 @@ class mlp_agent(Agent):
 
         #def output_activation(x): return (1/(1-discount_factor))*(T.tanh(x)*(self.reward_bounds[1]-self.reward_bounds[0])+self.reward_bounds[0])
         #self.mlp = MLP(rng=self.numpy_rng, input=self.x, n_in=self.state_size+self.num_actions, n_hidden=n_hidden, n_out=1, activation=output_activation)
+        # Linear output activation
         self.mlp = MLP(rng=self.numpy_rng, input=self.x, n_in=self.state_size+self.num_actions, n_hidden=n_hidden, n_out=1, activation=None)
         self.q = self.mlp.output[:,0]
         self.evaluate = function([self.x_state,self.x_action], self.q)
@@ -112,7 +120,7 @@ class mlp_agent(Agent):
         self.rprop_values = [shared(learning_rate*numpy.ones(p.get_value(borrow=True).shape)) for p in self.mlp.params]
         self.rprop_signs = [shared(numpy.zeros(p.get_value(borrow=True).shape)) for p in self.mlp.params]
         target = T.vector('target')
-        # L2-norm regularization term keeps the weights under control
+        # L2-norm regularization term keeps the weight magnitudes under control
         cost = T.sum(T.sqr(self.q - target)) + 0.001*self.mlp.L2_sqr
 
         updates = []
@@ -152,8 +160,7 @@ class mlp_agent(Agent):
         else:
             action = max_action
 
-        target = reward + discount_factor * max_q
-        self.experiences.append((self.prev_state,self.prev_action,target))
+        self.experiences.append(Experience(self.prev_state,self.prev_action,state,reward))
 
         self.prev_state = copy.deepcopy(state)
         self.prev_action = copy.deepcopy(action)
@@ -162,18 +169,27 @@ class mlp_agent(Agent):
 
     # R -> ()
     def agent_end(self, reward):
-        self.experiences.append((self.prev_state,self.prev_action,reward))
-        states = numpy.vstack([e[0] for e in self.experiences])
-        actions = numpy.array([e[1] for e in self.experiences],dtype='int32')
-        targets = numpy.array([e[2] for e in self.experiences])
-        print targets
-        cost = self.update(states,actions,targets)
-        #cost = numpy.inf
-        #while cost > 0.1:
-            #cost = self.update(states,actions,targets)
-        print 'Cost:',cost
+        self.experiences.append(Experience(self.prev_state,self.prev_action,None,reward))
+
+        states = numpy.vstack([e.prev_state for e in self.experiences])
+        actions = numpy.array([e.prev_action for e in self.experiences],dtype='int32')
+        targets = numpy.zeros(len(self.experiences))
+        costs = []
+        for n in xrange(10):
+            # Recompute target Q values with current estimate
+            for i in xrange(len(self.experiences)-1):
+                max_q = self.max_action(self.experiences[i].state)[0]
+                targets[i] = self.experiences[i].reward + discount_factor*max_q
+            targets[-1] = self.experiences[i].reward
+
+            cost = self.update(states,actions,targets)
+            costs.append(cost)
+        print 'Costs:',costs
         self.experiences = []
+
         self.p_exploration *= p_exploration_decay
+        if self.p_exploration < 1:
+            self.p_exploration = 0
         print 'p_exploration',self.p_exploration
 
     def agent_cleanup(self):
